@@ -1,6 +1,7 @@
 const User = require("../models/user");        // Import model User để thao tác với collection users
 const bcrypt = require("bcryptjs");            // Import bcryptjs để hash password (mã hóa)
 const nodemailer = require("nodemailer");      // Import nodemailer để gửi email
+const jwt = require("jsonwebtoken");
 
 // Hàm gửi OTP qua email
 const sendOtpEmail = async (email, otp) => {
@@ -106,3 +107,33 @@ exports.verifyOtp = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.login = async (req, res) => {
+  const {email, password} = req.body;
+  try{
+    const user = await User.findOne({ email });
+    console.log(email);
+    if (!user) return res.status(400).json({ message: "User not found" });
+    
+    if (!bcrypt.compare(password, user.password)){
+      return res.status(400).json({message: "Invalid request"});
+    }
+    return res.json({
+      email: email,
+      token: generateJWT(email)
+    })
+  }
+  catch (err){
+    res.status(500).json({ message: err.message });
+  }
+}
+
+const generateJWT = (email) => {
+  const payload ={email: email};
+  return jwt.sign(payload, process.env.ACCESS_TOKEN_KEY, {
+    algorithm: 'HS256',
+    expiresIn: '60m'
+  });
+}
+
+
