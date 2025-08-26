@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const sendOtpEmail = async (email, otp) => {
   const transporter = nodemailer.createTransport({  // Tạo transporter để gửi email
     service: "gmail",                              // Dùng Gmail làm dịch vụ gửi mail
-    auth: { 
+    auth: {
       user: process.env.EMAIL_USER,               // Email gửi (lấy từ .env)
       pass: process.env.EMAIL_PASS                // Password hoặc app password (lấy từ .env)
     },
@@ -33,17 +33,17 @@ exports.register = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Sinh OTP 6 số ngẫu nhiên
 
     const user = new User({                        // Tạo instance User mới
-      name, 
-      email, 
+      name,
+      email,
       password: hashedPassword,                    // Lưu password đã hash
       otp,                                         // Lưu OTP vừa tạo
-      otpExpiry: new Date(Date.now() + 5*60*1000) // OTP hết hạn sau 5 phút
+      otpExpiry: new Date(Date.now() + 5 * 60 * 1000) // OTP hết hạn sau 5 phút
     });
 
     await user.save();                             // Lưu user vào MongoDB
     await sendOtpEmail(email, otp);                // Gửi email OTP cho user
     res.status(201).json({ message: "OTP sent to email" }); // Trả về response thành công
-  } catch (err) { 
+  } catch (err) {
     res.status(500).json({ message: err.message }); // Nếu lỗi server, trả về 500 và message lỗi
   }
 };
@@ -56,7 +56,7 @@ exports.forgotPassword = async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.otp = otp;
-    user.otpExpiry = new Date(Date.now() + 5*60*1000); // 5 phút
+    user.otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 phút
     await user.save();
 
     await sendOtpEmail(email, otp); // gửi OTP thực qua email
@@ -109,27 +109,28 @@ exports.verifyOtp = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  const {email, password} = req.body;
-  try{
+  const { email, password } = req.body;
+  try {
     const user = await User.findOne({ email });
     console.log(email);
     if (!user) return res.status(400).json({ message: "User not found" });
-    
-    if (!bcrypt.compare(password, user.password)){
-      return res.status(400).json({message: "Invalid request"});
+
+    if (!bcrypt.compare(password, user.password)) {
+      return res.status(400).json({ message: "Invalid request" });
     }
     return res.json({
       email: email,
       token: generateJWT(email)
     })
   }
-  catch (err){
+  catch (err) {
     res.status(500).json({ message: err.message });
   }
-}
+};
+
 
 const generateJWT = (email) => {
-  const payload ={email: email};
+  const payload = { email: email };
   return jwt.sign(payload, process.env.ACCESS_TOKEN_KEY, {
     algorithm: 'HS256',
     expiresIn: '60m'

@@ -8,6 +8,7 @@ app.use(cors());                                  // Sử dụng CORS middleware
 app.use(express.json());                          // Cho phép server parse JSON từ request body
 
 app.use("/api/auth", require("./routes/authRoutes"));  // Khi request /api/auth/*, dùng router authRoutes.js
+app.use("/api/", require("./routes/profileRoutes")); // Khi request /api/profile/*, dùng router profileRoutes.js
 
 mongoose.connect(process.env.MONGO_URI)          // Kết nối MongoDB bằng MONGO_URI trong .env
     .then(() => console.log("MongoDB connected"))   // Nếu kết nối thành công, log ra console
